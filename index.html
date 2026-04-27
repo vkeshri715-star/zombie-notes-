@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZOMBIE NOTES — Rise of the Dead Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Rubik+Dirt&family=Eater&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --black: #050505;
+    --dark: #0a0a0a;
+    --card: #0f0f0f;
+    --blood: #8b0000;
+    --blood2: #cc0000;
+    --blood3: #ff1a1a;
+    --green: #1a4a1a;
+    --green2: #2d7a2d;
+    --rot: #3d5a1a;
+    --bone: #d4c5a9;
+    --text: #c8b89a;
+    --muted: #555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Creepster', cursive;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4' fill='%238b0000'/%3E%3C/svg%3E") 12 12, crosshair;
+  }
+
+  /* Animated fog background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: 
+      radial-gradient(ellipse at 10% 20%, rgba(139,0,0,0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 80%, rgba(26,74,26,0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, rgba(10,10,10,0.9) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+    animation: fogMove 8s ease infinite alternate;
+  }
+
+  @keyframes fogMove {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+  }
+
+  /* Blood drip top */
+  .blood-drip-top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--blood2);
+    z-index: 100;
+    box-shadow: 0 0 20px var(--blood);
+  }
+
+  .blood-drip-top::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 0; right: 0;
+    height: 20px;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 30px,
+      var(--blood2) 30px,
+      var(--blood2) 36px,
+      transparent 36px,
+      transparent 50px,
+      var(--blood) 50px,
+      var(--blood) 54px,
+      transparent 54px,
+      transparent 80px
+    );
+    clip-path: polygon(
+      0% 0%, 3% 0%, 4% 60%, 5% 100%, 6% 60%, 7% 0%,
+      12% 0%, 13% 0%, 14% 80%, 15% 100%, 16% 80%, 17% 0%,
+      25% 0%, 26% 40%, 27% 100%, 28% 40%, 29% 0%,
+      35% 0%, 36% 70%, 37% 100%, 38% 70%, 39% 0%,
+      100% 0%, 100% 100%, 0% 100%
+    );
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 30px 0 40px;
+    animation: riseFromDead 1s ease both;
+  }
+
+  .skull-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    animation: float 3s ease infinite;
+  }
+
+  .logo {
+    font-family: 'Nosifer', cursive;
+    font-size: clamp(2rem, 8vw, 4.5rem);
+    color: var(--blood2);
+    text-shadow: 
+      0 0 20px rgba(204,0,0,0.8),
+      0 0 40px rgba(139,0,0,0.5),
+      3px 3px 0 #000;
+    letter-spacing: 4px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .logo span { color: var(--bone); }
+
+  .tagline {
+    font-family: 'Creepster', cursive;
+    font-size: 1rem;
+    color: var(--green2);
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(45,122,45,0.5);
+  }
+
+  /* Blood splatter decoration */
+  .splatter {
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* INPUT SECTION */
+  .input-section {
+    margin-bottom: 30px;
+    animation: riseFromDead 1s ease 0.2s both;
+  }
+
+  .section-label {
+    font-family: 'Rubik Dirt', cursive;
+    font-size: 0.85rem;
+    color: var(--blood3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--blood), transparent);
+  }
+
+  .notes-input {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid var(--blood);
+    border-radius: 4px;
+    color: var(--bone);
+    font-family: 'Shadows Into Light', cursive;
+    font-size: 1rem;
+    padding: 20px;
+    resize: vertical;
+    min-height: 180px;
+    outline: none;
+    line-height: 1.8;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 20px rgba(139,0,0,0.1);
+  }
+
+  .notes-input::placeholder {
+    color: #333;
+    font-style: italic;
+  }
+
+  .notes-input:focus {
+    border-color: var(--blood3);
+    box-shadow: 
+      inset 0 0 20px rgba(139,0,0,0.15),
+      0 0 20px rgba(139,0,0,0.2);
+  }
+
+  /* FILE UPLOAD */
+  .upload-area {
+    border: 2px dashed var(--blood);
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(139,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-area:hover {
+    border-color: var(--blood3);
+    background: rgba(139,0,0,0.1);
+  }
+
+  .upload-area input {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+  .upload-text {
+    font-family: 'Creepster', cursive;
+    font-size: 1rem;
+    color: var(--blood2);
+    letter-spacing: 2px;
+  }
+  .upload-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: sans-serif;
+  }
+
+  /* CONVERT BUTTON */
+  .convert-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--blood), #4a0000);
+    color: var(--bone);
+    border: 1px solid var(--blood2);
+    padding: 18px;
+    font-family: 'Rubik Dirt', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+
+  .convert-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transition: left 0.5s;
+  }
+
+  .convert-btn:hover::before { left: 100%; }
+
+  .convert-btn:hover {
+    background: linear-gradient(135deg, var(--blood2), var(--blood));
+    box-shadow: 0 0 30px rgba(139,0,0,0.5);
+    transform: translateY(-2px);
+  }
+
+  .convert-btn:active { transform: scale(0.98); }
+
+  /* LOADING */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .loading.show { display: block; }
+
+  .zombie-walk {
+    font-size: 2rem;
+    animation: zombieWalk 0.5s steps(2) infinite;
+    display: inline-block;
+    margin-bottom: 15px;
+  }
+
+  .loading-text {
+    font-family: 'Creepster', cursive;
+    font-size: 1.1rem;
+    color: var(--blood2);
+    letter-spacing: 3px;
+    animation: flicker 0.5s ease infinite alternate;
+  }
+
+  .loading-bar {
+    width: 100%;
+    height: 4px;
+    background: #1a0000;
+    border-radius: 2px;
+    margin-top: 15px;
+    overflow: hidden;
+  }
+
+  .loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blood), var(--blood3));
+    border-radius: 2px;
+    animation: loadFill 2s ease infinite;
+    box-shadow: 0 0 10px var(--blood);
+  }
+
+  /* RESULTS */
+  .results-section {
+    display: none;
+  }
+
+  .results-section.show { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .results-title {
+    font-family: 'Nosifer', cursive;
+    font-size: 1.5rem;
+    color: var(--blood2);
+    text-shadow: 0 0 15px rgba(204,0,0,0.5);
+  }
+
+  /* FLASHCARDS */
+  .flashcards-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .flashcard {
+    background: var(--card);
+    border: 1px solid #1a0000;
+    border-left: 4px solid var(--blood);
+    border-radius: 4px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    animation: cardRise 0.5s ease both;
+    transition: all 0.3s ease;
+  }
+
+  .flashcard::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(139,0,0,0.05), transparent);
+    pointer-events: none;
+  }
+
+  .flashcard:hover {
+    border-left-color: var(--blood3);
+    box-shadow: 0 0 20px rgba(139,0,0,0.2), -4px 0 0 var(--blood3);
+    transform: translateX(4px);
+  }
+
+  .card-number {
+    position: absolute;
+    top: 12px; right: 16px;
+    font-family: 'Nosifer', cursive;
+    font-size: 0.7rem;
+    color: #2a0000;
+    letter-spacing: 2px;
+  }
+
+  .card-skull {
+    position: absolute;
+    bottom: 10px; right: 14px;
+    font-size: 1.2rem;
+    opacity: 0.15;
+  }
+
+  .card-heading {
+    font-family: 'Eater', cursive;
+    font-size: 1.3rem;
+    color: var(--blood3);
+    margin-bottom: 12px;
+    text-decoration: underline;
+    text-decoration-color: var(--blood);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    text-shadow: 0 0 10px rgba(255,26,26,0.3);
+    line-height: 1.3;
+  }
+
+  .card-body {
+    font-family: 'Shadows Into Light', cursive;
+    font-size: 1.05rem;
+    color: var(--bone);
+    line-height: 1.9;
+  }
+
+  .card-body .highlight {
+    background: rgba(139,0,0,0.3);
+    border-bottom: 1px solid var(--blood);
+    padding: 0 4px;
+    border-radius: 2px;
+    color: #ffaaaa;
+  }
+
+  .card-body .bold-term {
+    font-family: 'Rubik Dirt', cursive;
+    color: var(--blood3);
+    font-size: 0.95rem;
+  }
+
+  .card-tag {
+    display: inline-block;
+    background: rgba(139,0,0,0.2);
+    border: 1px solid #2a0000;
+    color: var(--blood2);
+    padding: 3px 12px;
+    border-radius: 2px;
+    font-family: 'Creepster', cursive;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-top: 14px;
+  }
+
+  /* BLOOD SPRAY PDF BUTTON */
+  .pdf-btn-wrapper {
+    position: relative;
+    margin: 30px 0;
+  }
+
+  .pdf-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #3a0000, var(--blood));
+    color: var(--bone);
+    border: 2px solid var(--blood2);
+    padding: 20px;
+    font-family: 'Nosifer', cursive;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pdf-btn:hover {
+    background: linear-gradient(135deg, var(--blood), var(--blood2));
+    box-shadow: 0 0 40px rgba(204,0,0,0.6);
+    transform: translateY(-2px);
+  }
+
+  /* Blood spray canvas */
+  #bloodCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ANIMATIONS */
+  @keyframes riseFromDead {
+    from { opacity: 0; transform: translateY(30px); filter: blur(4px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes zombieWalk {
+    0% { transform: translateX(-5px) rotate(-5deg); }
+    100% { transform: translateX(5px) rotate(5deg); }
+  }
+
+  @keyframes flicker {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+  }
+
+  @keyframes loadFill {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+
+  @keyframes cardRise {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes bloodDrop {
+    0% { transform: translateY(-20px) scale(0.5); opacity: 1; }
+    100% { transform: translateY(100px) scale(1.5); opacity: 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .logo { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Blood drip top -->
+<div class="blood-drip-top"></div>
+
+<!-- Blood spray canvas -->
+<canvas id="bloodCanvas"></canvas>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="skull-row">💀 🧟 💀 🧟 💀</div>
+    <div class="logo">ZOMBIE<br><span>NOTES</span></div>
+    <div class="tagline">☠ Your Dead Notes Rise Again ☠</div>
+  </div>
+
+  <!-- Input Section -->
+  <div class="input-section">
+
+    <!-- File Upload -->
+    <div class="section-label">🩸 Upload PDF ya Image</div>
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" accept=".pdf,image/*" multiple onchange="handleFile(this)"/>
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">☠ DROP YOUR FILES HERE ☠</div>
+      <div class="upload-sub">PDF, JPG, PNG — sab chalega</div>
+    </div>
+
+    <!-- Text Input -->
+    <div class="section-label">🩸 Ya Notes Paste Karo</div>
+    <textarea 
+      class="notes-input" 
+      id="notesInput"
+      placeholder="Yahan apne boring notes paste karo... Claude unhe zombie style mein convert kar dega!! 🧟‍♂️"
+    ></textarea>
+
+    <!-- Convert Button -->
+    <button class="convert-btn" onclick="convertNotes()">
+      🧟 RESURRECT MY NOTES 🧟
+    </button>
+
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="zombie-walk">🧟</div>
+    <div class="loading-text">☠ RAISING THE DEAD... ☠</div>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-header">
+      <div class="results-title">☠ RISEN NOTES</div>
+      <div style="font-family:'Creepster',cursive; color:var(--muted); font-size:0.85rem;" id="cardCount"></div>
+    </div>
+    <div class="flashcards-grid" id="flashcardsGrid"></div>
+
+    <!-- PDF Download Button -->
+    <div class="pdf-btn-wrapper">
+      <button class="pdf-btn" onclick="downloadPDF(event)">
+        💀 DOWNLOAD PDF — BLOOD EDITION 💀
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// =====================
+// BLOOD SPRAY EFFECT
+// =====================
+const canvas = document.getElementById('bloodCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+let bloodDrops = [];
+
+function sprayBlood(x, y, count = 40) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 15 + 5;
+    const size = Math.random() * 12 + 3;
+    bloodDrops.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - Math.random() * 10,
+      size,
+      life: 1,
+      gravity: 0.4 + Math.random() * 0.3,
+      splat: false,
+      color: `hsl(${Math.random() * 20}, 100%, ${15 + Math.random() * 20}%)`
+    });
+  }
+}
+
+function animateBlood() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  bloodDrops = bloodDrops.filter(d => d.life > 0);
+
+  bloodDrops.forEach(d => {
+    d.vy += d.gravity;
+    d.x += d.vx;
+    d.y += d.vy;
+    d.life -= 0.018;
+    d.vx *= 0.98;
+
+    ctx.save();
+    ctx.globalAlpha = d.life;
+    ctx.fillStyle = d.color;
+    ctx.beginPath();
+
+    if (Math.abs(d.vx) > 2 || Math.abs(d.vy) > 2) {
+      // Moving drop - elongated
+      ctx.ellipse(d.x, d.y, d.size * 0.4, d.size, Math.atan2(d.vy, d.vx), 0, Math.PI * 2);
+    } else {
+      // Splat
+      ctx.arc(d.x, d.y, d.size * 1.5, 0, Math.PI * 2);
+    }
+
+    ctx.fill();
+    ctx.restore();
+  });
+
+  requestAnimationFrame(animateBlood);
+}
+animateBlood();
+
+// =====================
+// FILE HANDLER
+// =====================
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const uploadArea = document.getElementById('uploadArea');
+
+  if (file.type === 'application/pdf') {
+    uploadArea.querySelector('.upload-text').textContent = `☠ ${file.name} — LOADED ☠`;
+    uploadArea.style.borderColor = 'var(--blood3)';
+    document.getElementById('notesInput').placeholder = 'PDF loaded!! Convert button dabaao... 🧟';
+    // Store file name for reference
+    window.uploadedFileName = file.name;
+    window.uploadedFile = file;
+  } else if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadArea.querySelector('.upload-text').textContent = `☠ ${file.name} — IMAGE LOADED ☠`;
+      uploadArea.style.borderColor = 'var(--blood3)';
+      window.uploadedImage = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// =====================
+// CONVERT NOTES
+// =====================
+async function convertNotes() {
+  const notesText = document.getElementById('notesInput').value.trim();
+
+  if (!notesText && !window.uploadedFileName) {
+    // Blood spray on empty
+    sprayBlood(window.innerWidth/2, window.innerHeight/2, 20);
+    alert('☠ Pehle notes daalo bhai!! ☠');
+    return;
+  }
+
+  // Show loading
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('resultsSection').classList.remove('show');
+  document.getElementById('flashcardsGrid').innerHTML = '';
+
+  // Blood spray on convert
+  sprayBlood(window.innerWidth/2, window.innerHeight * 0.4, 30);
+
+  try {
+    const inputText = notesText || `Notes from file: ${window.uploadedFileName}. Please create 5 zombie-themed flashcards about general study topics.`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: `You are ZOMBIE NOTES — a dark, horror-themed notes converter. 
+Convert student notes into engaging zombie-themed flashcards.
+Respond ONLY with valid JSON, no other text:
+{
+  "cards": [
+    {
+      "heading": "Short topic heading (max 8 words)",
+      "body": "2-3 sentences explaining the concept clearly but with slight zombie/horror flair",
+      "highlight": "one key term or phrase to highlight",
+      "tag": "subject tag"
+    }
+  ]
+}
+Rules:
+- Create 4-6 cards based on the notes
+- Keep content EDUCATIONALLY ACCURATE
+- Add mild zombie/horror flavor to headings only
+- Body text must be clear and useful for studying
+- highlight should be a key term from the body
+- Respond ONLY with JSON, no markdown`,
+        messages: [{ role: "user", content: `Convert these notes into zombie flashcards:\n\n${inputText}` }]
+      })
+    });
+
+    const data = await response.json();
+
+    let fullText = '';
+    data.content.forEach(block => {
+      if (block.type === 'text') fullText += block.text;
+    });
+
+    // Parse JSON
+    let parsed;
+    try {
+      const cleaned = fullText.replace(/```json|```/g, '').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(match ? match[0] : cleaned);
+    } catch(e) {
+      parsed = { cards: [{ heading: "☠ Notes Risen", body: fullText.slice(0, 300), highlight: "key term", tag: "General" }] };
+    }
+
+    // Store cards for PDF
+    window.currentCards = parsed.cards;
+
+    // Render cards
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('resultsSection').classList.add('show');
+    document.getElementById('cardCount').textContent = `☠ ${parsed.cards.length} DEAD CARDS RISEN ☠`;
+
+    const grid = document.getElementById('flashcardsGrid');
+    parsed.cards.forEach((card, i) => {
+      const bodyWithHighlight = card.body.replace(
+        new RegExp(card.highlight, 'gi'),
+        `<span class="highlight">${card.highlight}</span>`
+      );
+
+      const el = document.createElement('div');
+      el.className = 'flashcard';
+      el.style.animationDelay = `${i * 0.1}s`;
+      el.innerHTML = `
+        <div class="card-number">☠ ${['I','II','III','IV','V','VI'][i]}</div>
+        <div class="card-heading">🧟 ${card.heading}</div>
+        <div class="card-body">${bodyWithHighlight}</div>
+        <span class="card-tag">${card.tag}</span>
+        <div class="card-skull">💀</div>
+      `;
+      grid.appendChild(el);
+
+      // Spray blood on each card appear
+      setTimeout(() => {
+        sprayBlood(
+          window.innerWidth * 0.3 + Math.random() * window.innerWidth * 0.4,
+          window.innerHeight * 0.3 + Math.random() * window.innerHeight * 0.4,
+          8
+        );
+      }, i * 150);
+    });
+
+    // Scroll to results
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+  } catch(err) {
+    document.getElementById('loading').classList.remove('show');
+    sprayBlood(window.innerWidth/2, window.innerHeight/2, 50);
+    alert(`☠ MOTOR DEFECTUS: ${err.message}`);
+  }
+}
+
+// =====================
+// PDF DOWNLOAD WITH BLOOD SPRAY
+// =====================
+async function downloadPDF(e) {
+  // BLOOD SPRAY!!
+  const rect = e.target.getBoundingClientRect();
+  const bx = rect.left + rect.width/2;
+  const by = rect.top + rect.height/2;
+
+  // Massive blood spray
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      sprayBlood(bx + (Math.random()-0.5)*100, by, 25);
+    }, i * 100);
+  }
+
+  if (!window.currentCards || window.currentCards.length === 0) {
+    alert('☠ Pehle notes convert karo!! ☠');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+
+  // Background
+  doc.setFillColor(5, 5, 5);
+  doc.rect(0, 0, pageW, pageH, 'F');
+
+  // Title
+  doc.setFillColor(139, 0, 0);
+  doc.rect(0, 0, pageW, 25, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(212, 197, 169);
+  doc.text('ZOMBIE NOTES', pageW/2, 12, { align: 'center' });
+
+  doc.setFontSize(8);
+  doc.setTextColor(100, 50, 50);
+  doc.text('☠ Your Dead Notes — Risen Again ☠', pageW/2, 20, { align: 'center' });
+
+  let yPos = 35;
+
+  window.currentCards.forEach((card, i) => {
+    // Check if need new page
+    if (yPos > pageH - 50) {
+      doc.addPage();
+      doc.setFillColor(5, 5, 5);
+      doc.rect(0, 0, pageW, pageH, 'F');
+      yPos = 20;
+    }
+
+    // Card background
+    doc.setFillColor(15, 5, 5);
+    doc.setDrawColor(139, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, yPos, contentW, 45, 2, 2, 'FD');
+
+    // Left blood bar
+    doc.setFillColor(139, 0, 0);
+    doc.rect(margin, yPos, 3, 45, 'F');
+
+    // Card number
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(80, 20, 20);
+    doc.text(`☠ ${['I','II','III','IV','V','VI'][i] || i+1}`, pageW - margin - 5, yPos + 6, { align: 'right' });
+
+    // Heading
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(255, 80, 80);
+    const headingLines = doc.splitTextToSize(`🧟 ${card.heading}`, contentW - 15);
+    doc.text(headingLines, margin + 8, yPos + 10);
+
+    // Underline
+    const headingWidth = Math.min(doc.getTextWidth(`🧟 ${card.heading}`), contentW - 15);
+    doc.setDrawColor(139, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.line(margin + 8, yPos + 12, margin + 8 + Math.min(headingWidth, 100), yPos + 12);
+
+    // Body
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(200, 184, 154);
+    const bodyLines = doc.splitTextToSize(card.body, contentW - 15);
+    doc.text(bodyLines.slice(0, 3), margin + 8, yPos + 20);
+
+    // Tag
+    doc.setFillColor(40, 5, 5);
+    doc.setDrawColor(60, 10, 10);
+    doc.roundedRect(margin + 8, yPos + 36, 30, 6, 1, 1, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(139, 0, 0);
+    doc.text(card.tag, margin + 23, yPos + 40, { align: 'center' });
+
+    yPos += 52;
+  });
+
+  // Footer
+  doc.setFillColor(139, 0, 0);
+  doc.rect(0, pageH - 8, pageW, 8, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(80, 20, 20);
+  doc.text('☠ ZOMBIE NOTES — Rise of the Dead Notes ☠', pageW/2, pageH - 3, { align: 'center' });
+
+  // Save
+  setTimeout(() => {
+    doc.save('zombie-notes-blood-edition.pdf');
+  }, 800);
+}
+</script>
+
+</body>
+</html>
